@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StreamCadet</title>
+    <style>
+        /* 2016 YouTube Aesthetics */
+        body { background-color: #f1f1f1; font-family: Roboto, Arial, sans-serif; margin: 0; color: #333; overflow-x: hidden; }
+        
+        header { 
+            background: #fff; height: 56px; display: flex; align-items: center; 
+            padding: 0 16px; border-bottom: 1px solid #e8e8e8; position: sticky; top: 0; z-index: 100; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Header Shadow */
+        }
+        
+        .logo { color: #cc181e; font-weight: bold; font-size: 20px; cursor: pointer; letter-spacing: -1px; display: flex; align-items: center; text-decoration: none; }
+        .logo span { color: #222; margin-left: 2px; background: #eee; padding: 2px 4px; border-radius: 3px; font-size: 14px; }
+
+        .search-box { flex-grow: 1; max-width: 650px; display: flex; margin: 0 40px; }
+        input#search-input { width: 100%; padding: 8px 10px; border: 1px solid #ccc; border-radius: 2px 0 0 2px; font-size: 14px; outline: none; }
+        #search-btn { padding: 0 20px; border: 1px solid #ccc; border-left: none; background: #f8f8f8; cursor: pointer; color: #666; }
+
+        .container { display: flex; max-width: 1284px; margin: 0 auto; min-height: calc(100vh - 56px); }
+        
+        nav { width: 240px; padding: 15px 0; height: calc(100vh - 56px); position: sticky; top: 56px; flex-shrink: 0; }
+        nav div { padding: 10px 24px; font-size: 14px; cursor: pointer; color: #555; }
+        nav div:hover { background: #e2e2e2; }
+        nav .active { color: #cc181e; font-weight: 500; border-left: 3px solid #cc181e; background: #fff; }
+        nav .nav-heading { color: #cc181e; font-size: 11px; font-weight: bold; text-transform: uppercase; padding: 10px 24px; pointer-events: none; }
+        hr { border: 0; border-top: 1px solid #e8e8e8; margin: 10px 0; }
+
+        .content { flex-grow: 1; padding: 20px; width: 0; }
+        
+        .recommended-banner {
+            background: #fff; border: 1px solid #e8e8e8; padding: 15px 20px;
+            margin-bottom: 20px; display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Banner Shadow */
+        }
+        .channel-info { display: flex; align-items: center; }
+        .channel-icon {
+            width: 50px; height: 50px; background: #cc181e; border-radius: 50%;
+            margin-right: 15px; display: flex; align-items: center; justify-content: center;
+            color: white; font-weight: bold; font-size: 24px; flex-shrink: 0;
+        }
+        .channel-text h3 { margin: 0; font-size: 16px; font-weight: 500; }
+        .channel-text p { margin: 2px 0 0; font-size: 13px; color: #606060; }
+
+        /* The "Shelf" Grid with Shadow */
+        .feed { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); 
+            gap: 16px; 
+            background: #fff; 
+            padding: 20px; 
+            border: 1px solid #e8e8e8; 
+            min-height: 100px; 
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1); /* Main Feed Shadow */
+        }
+        
+        .video-card { cursor: pointer; }
+        .thumb { width: 100%; aspect-ratio: 16/9; background: #000; position: relative; }
+        .title { font-size: 14px; font-weight: 500; margin: 10px 0 5px; color: #167ac6; }
+        .metadata { font-size: 13px; color: #606060; }
+
+        #player-view { display: none; }
+        .player-wrapper { 
+            background: #000; 
+            width: 100%; 
+            position: relative;
+            aspect-ratio: 16/9;
+            max-height: 70vh;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3); /* Stronger Player Shadow */
+        }
+        video { 
+            width: 100%; 
+            height: 100%; 
+            object-fit: contain;
+        }
+        
+        .btn-red { background: #cc181e; color: white; border: none; padding: 8px 12px; border-radius: 2px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 13px; }
+        .btn-red.subscribed { background: #eee; color: #606060; }
+        .btn-upload { background: #f8f8f8; border: 1px solid #ccc; padding: 6px 12px; cursor: pointer; margin-left: 10px; font-size: 13px; }
+
+        #upload-section { 
+            display: none; background: white; padding: 30px; border: 1px solid #e8e8e8; 
+            max-width: 500px; margin: 20px auto; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1); /* Modal Shadow */
+        }
+        .empty-msg { text-align: center; color: #606060; padding: 40px; grid-column: 1 / -1; }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo" onclick="showHome()">Stream<span>Cadet</span></div>
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="Search">
+        <button id="search-btn" onclick="handleSearch()">Search</button>
+    </div>
+    <button class="btn-upload" onclick="showUpload()">Upload</button>
+</header>
+
+<div class="container">
+    <nav>
+        <div class="active" onclick="showHome()">Home</div>
+        <div>Trending</div>
+        <hr>
+        <div class="nav-heading">Best of StreamCadet</div>
+        <div>Music</div>
+        <div>Gaming</div>
+        <hr>
+        <div onclick="showUpload()">Library</div>
+    </nav>
+
+    <main class="content">
+        <div id="home-view">
+            <div class="recommended-banner">
+                <div class="channel-info">
+                    <div class="channel-icon">S</div>
+                    <div class="channel-text">
+                        <h3>StreamCadet Official</h3>
+                        <p>Recommended for you</p>
+                    </div>
+                </div>
+                <button class="btn-red" onclick="toggleSub(this)">Subscribe</button>
+            </div>
+            <div id="home-feed" class="feed"></div>
+        </div>
+
+        <div id="player-view">
+            <div class="player-wrapper">
+                <video id="main-video" controls autoplay></video>
+            </div>
+            <h1 id="player-title" style="font-size: 20px; font-weight: 400; margin: 15px 0;"></h1>
+            <div style="border-bottom: 1px solid #e8e8e8; padding-bottom: 15px; margin-bottom: 15px;">
+                <button class="btn-red" onclick="showHome()">Back to Home</button>
+            </div>
+            <p style="color: #606060; font-size: 13px;">Uploaded via StreamCadet for Chromebook</p>
+        </div>
+
+        <div id="upload-section">
+            <h2>Upload Video</h2>
+            <input type="text" id="up-title" placeholder="Video Title" style="width:100%; padding:10px; margin-bottom:10px; box-sizing: border-box;"><br>
+            <input type="file" id="up-file" accept="video/*" style="margin-bottom:20px;"><br>
+            <button class="btn-red" onclick="processUpload()">Publish</button>
+            <button onclick="showHome()" style="background:none; border:none; cursor:pointer; color:#666; margin-left:10px;">Cancel</button>
+        </div>
+    </main>
+</div>
+
+<script>
+    let videos = [];
+
+    function renderFeed(query = "") {
+        const feed = document.getElementById('home-feed');
+        if(!feed) return;
+        feed.innerHTML = "";
+        
+        const filtered = videos.filter(v => v.title.toLowerCase().includes(query.toLowerCase()));
+        
+        if (filtered.length === 0) {
+            feed.innerHTML = `<div class="empty-msg">No videos found. Click "Upload" to add your first video!</div>`;
+            return;
+        }
+        
+        filtered.forEach(v => {
+            feed.innerHTML += `
+                <div class="video-card" onclick="playVideo('${v.title}', '${v.url}')">
+                    <div class="thumb"></div>
+                    <div class="title">${v.title}</div>
+                    <div class="metadata">StreamCadet<br>${v.views} views</div>
+                </div>`;
+        });
+    }
+
+    function playVideo(title, url) {
+        document.getElementById('home-view').style.display = 'none';
+        document.getElementById('upload-section').style.display = 'none';
+        document.getElementById('player-view').style.display = 'block';
+        document.getElementById('player-title').innerText = title;
+        const video = document.getElementById('main-video');
+        if(url) {
+            video.src = url;
+            video.play();
+        }
+    }
+
+    function showHome() {
+        document.getElementById('home-view').style.display = 'block';
+        document.getElementById('player-view').style.display = 'none';
+        document.getElementById('upload-section').style.display = 'none';
+        const video = document.getElementById('main-video');
+        video.pause();
+        video.src = "";
+        renderFeed();
+    }
+
+    function showUpload() {
+        document.getElementById('home-view').style.display = 'none';
+        document.getElementById('player-view').style.display = 'none';
+        document.getElementById('upload-section').style.display = 'block';
+    }
+
+    function processUpload() {
+        const title = document.getElementById('up-title').value;
+        const file = document.getElementById('up-file').files[0];
+        if(!title || !file) {
+            alert("Title and file required!");
+            return;
+        }
+
+        const url = URL.createObjectURL(file);
+        videos.unshift({ id: Date.now(), title: title, views: "0", url: url });
+        
+        document.getElementById('up-title').value = "";
+        document.getElementById('up-file').value = "";
+        
+        showHome();
+    }
+
+    function handleSearch() {
+        renderFeed(document.getElementById('search-input').value);
+    }
+
+    function toggleSub(btn) {
+        btn.innerText = (btn.innerText === "SUBSCRIBE") ? "SUBSCRIBED" : "SUBSCRIBE";
+        btn.classList.toggle("subscribed");
+    }
+
+    window.onload = () => renderFeed();
+</script>
+</body>
+</html>
